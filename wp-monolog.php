@@ -26,16 +26,6 @@ class WPMonolog {
 
 	function __construct(){
 		$this->logger   = $this->getLoggerInstance();
-		$this->defaults = array(
-			'log_path'      => dirname(__FILE__) . '/log/',
-			'log_name'      => date('Y-m-d').'_wp_monolog.log',
-			'level'         => 100,
-			'WPMailHandler' => array(
-				'to'        => get_option('admin_email'),
-				'subject'   => 'An Error on the site "'.get_option('blogname').'" has been detected.',
-				'from'      => get_option('admin_email')
-			)
-		);
 	}
 
 	function initialize() {
@@ -79,7 +69,7 @@ class WPMonolog {
 function wp_monolog_settings( $index = '' ) {
 	$settings = get_option( "wp_monolog_settings", array() );
 	$defaults = array(
-		'log_path'      => dirname(__FILE__) . '/log/',
+		'log_path'      => WP_CONTENT_DIR . '/monolog/',
 		'log_name'      => date('Y-m-d').'_wp_monolog.log',
 		'level'         => 100,
 		'WPMailHandler' => array(

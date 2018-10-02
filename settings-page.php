@@ -147,6 +147,15 @@ function wp_monolog_options_page(  ) {
 }
 
 function wp_monolog_page_setting() {
+	global $wp_filesystem;
+	if ( empty( $wp_filesystem ) ) {
+		require_once  ABSPATH . '/wp-admin/includes/file.php' ;
+		WP_Filesystem();
+	}
+	$logfiles = $wp_filesystem->dirlist( wp_monolog_settings( 'log_path' ) );
+	if ( false === $logfiles ) {
+		wp_monolog_not_writable_alert();
+	}
 	$settings = wp_monolog_settings();
 	?>
 	<form action="" method="post">
@@ -164,7 +173,9 @@ function wp_monolog_page_setting() {
 							<?php endforeach; ?>
 						</select>
 					</td>
-					<td><?php esc_html_e( 'Can be overridden by defining WP_MONOLOG_LOG_LEVEL', 'wp_monolog' ) ?></td>
+					<td>
+						<p><?php esc_html_e( 'Can be overridden by defining WP_MONOLOG_LOG_LEVEL', 'wp_monolog' ) ?></p>
+					</td>
 				</tr>
 				<!-- <tr>
 					<th scope="row">From e-mail:</th>
@@ -197,6 +208,226 @@ function wp_monolog_page_setting() {
 	<?php
 }
 
-function wp_monolog_page_viewer() {
-	echo 'asdas';
+function wp_monolog_not_writable_alert() {
+    ?>
+    <div class="notice notice-error">
+        <p><?php _e( 'We unable to access <strong>' . wp_monolog_settings( 'log_path' ) . '</strong>, please make sure that path si writeable.', 'wp_monolog' ); ?></p>
+    </div>
+    <?php
 }
+
+function wp_monolog_page_viewer() {
+	global $logger;
+	global $wp_filesystem;
+	if ( empty( $wp_filesystem ) ) {
+		require_once  ABSPATH . '/wp-admin/includes/file.php' ;
+		WP_Filesystem();
+	}
+	$logfiles = $wp_filesystem->dirlist( wp_monolog_settings( 'log_path' ) );
+	if ( false === $logfiles ) {
+		return wp_monolog_not_writable_alert();
+	}
+	if ( ! empty( $logfiles ) ) {
+		krsort( $logfiles );
+		$logfiles = array_slice($logfiles, 0, 20);
+	}
+	if ( isset( $_GET['file'] ) && in_array( $_GET['file'], array_keys( $logfiles ) ) ) {
+		$file = sanitize_text_field( wp_unslash( $_GET['file'] ) );
+	} else {
+		$file = array_keys( $logfiles )[0];
+	}
+	$page = isset( $_GET['pagenum'] ) && 0 < intval( $_GET['pagenum'] ) ? sanitize_text_field( wp_unslash( $_GET['pagenum'] ) ) : 1;
+	$logs = wp_monolog_readfile( $file, $page );
+	if ( false === $logs ) {
+		return wp_monolog_not_writable_alert();
+	}
+
+	$page_links = paginate_links( array(
+		'base' => add_query_arg( 'pagenum', '%#%' ),
+		'format' => '',
+		'prev_text' => __( '&laquo;', 'text-domain' ),
+		'next_text' => __( '&raquo;', 'text-domain' ),
+		'total' => $logs['total_page'],
+		'current' => $page
+	) );
+
+	?>
+	<div class="wp-monolog-wrapper">
+		<div class="tablenav">
+			<form class="filter" action="">
+				<input type="hidden" name="page" value="<?php echo isset( $_GET['page'] ) ? esc_attr( $_GET['page'] ) : '' ?>">
+				<input type="hidden" name="tab" value="<?php echo isset( $_GET['tab'] ) ? esc_attr( $_GET['tab'] ) : '' ?>">
+				<select name="file">
+					<?php foreach ( $logfiles as $key => $logfile ) : ?>
+						<option <?php echo $file === $key ? 'selected' : ''; ?> value="<?php echo esc_attr( $key ) ?>"><?php echo esc_html( $key . ' (' . formatBytes( $logfile['size'] ) . ')' ) ?></option>
+					<?php endforeach; ?>
+				</select>
+				<button class="button button-primary">Get Logs</button>
+			</form>
+			<?php
+				if ( $page_links ) {
+					echo '<div class="tablenav-pages" style="margin: 1em 0">' . $page_links . '</div>';
+				}
+			?>
+		</div>
+		<table class="log-table widefat striped">
+			<thead>
+				<tr>
+					<th>Level</th>
+					<th>Date</th>
+					<th>Log</th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $logs['logs'] as $log ) : ?>
+					<tr>
+						<td class="col-level"><div class="<?php echo esc_attr( $log['level_class'] ) ?>"><?php echo esc_html( $log['level'] ) ?></div></td>
+						<td class="col-date"><?php echo esc_html( $log['date'] ) ?></td>
+						<td class="col-log"><div class="log-container"><?php echo rtrim( $log['text'], ' [] []' ); ?><span class="truncate-toggle"></span></div></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		<div class="tablenav">
+			<?php
+				if ( $page_links ) {
+					echo '<div class="tablenav-pages" style="margin: 1em 0">' . $page_links . '</div>';
+				}
+			?>
+		</div>
+	</div>
+	<?php
+}
+
+function formatBytes($bytes, $precision = 2) { 
+	$units = array('B', 'KB', 'MB', 'GB', 'TB'); 
+
+	$bytes = max($bytes, 0); 
+	$pow = floor(($bytes ? log($bytes) : 0) / log(1024)); 
+	$pow = min($pow, count($units) - 1); 
+
+	// Uncomment one of the following alternatives
+	// $bytes /= pow(1024, $pow);
+	// $bytes /= (1 << (10 * $pow)); 
+
+	return round($bytes, $precision) . $units[$pow]; 
+}
+
+function wp_monolog_readfile($file, $page = 1) {
+	$handle = fopen( wp_monolog_settings('log_path') . $file, "r");
+	
+	if ( false === $handle ) {
+		return false;
+	}
+
+	$chunkSize = 500000;
+	$iterations = 0;
+
+	$data = [];
+
+	if ($handle) {
+		while (! feof($handle)) {
+			$iterations++;
+			$chunk = fread($handle, $chunkSize);
+
+			if($iterations == $page){
+				$data['logs'] = wp_monolog_pretty($chunk);
+			}
+		}
+
+		fclose($handle);
+	}
+
+	$data['total_page'] = $iterations;
+
+	return $data;
+}
+
+function wp_monolog_pretty($file) {
+	$logLevels = array(
+		'emergency',
+		'alert',
+		'critical',
+		'error',
+		'warning',
+		'notice',
+		'info',
+		'debug',
+		'processed',
+		'failed'
+	);
+
+	$levelsClasses = array(
+		'debug' => 'info',
+		'info' => 'info',
+		'notice' => 'info',
+		'warning' => 'warning',
+		'error' => 'danger',
+		'critical' => 'danger',
+		'alert' => 'danger',
+		'emergency' => 'danger',
+		'processed' => 'info',
+		'failed' => 'warning',
+	);
+
+	$levelsImgs = array(
+		'debug' => 'info-circle',
+		'info' => 'info-circle',
+		'notice' => 'info-circle',
+		'warning' => 'exclamation-triangle',
+		'error' => 'exclamation-triangle',
+		'critical' => 'exclamation-triangle',
+		'alert' => 'exclamation-triangle',
+		'emergency' => 'exclamation-triangle',
+		'processed' => 'info-circle',
+		'failed' => 'exclamation-triangle'
+	);
+
+	$pattern = '/\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}([\+-]\d{4})?\].*/';
+
+	$log = [];
+
+	preg_match_all($pattern, $file, $headings);
+
+	if (!is_array($headings)) return $log;
+
+	$logData = preg_split($pattern, $file);
+
+	if ($logData[0] < 1) {
+		array_shift($logData);
+	}
+
+	foreach ($headings as $h) {
+		for ($i=0, $j = count($h); $i < $j; $i++) {
+			foreach ($logLevels as $level) {
+				if (strpos(strtolower($h[$i]), '.' . $level) || strpos(strtolower($h[$i]), $level . ':')) {
+
+					preg_match('/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}([\+-]\d{4})?)\](?:.*?(\w+)\.|.*?)' . $level . ': (.*?)( in .*?:[0-9]+)?$/i', $h[$i], $current);
+					if (!isset($current[4])) continue;
+
+					$log[] = [
+						'context' => $current[3],
+						'level' => $level,
+						'level_class' => $levelsClasses[$level],
+						'level_img' => $levelsImgs[$level],
+						'date' => $current[1],
+						'text' => $current[4],
+						'in_file' => isset($current[5]) ? $current[5] : null,
+						'stack' => preg_replace("/^\n*/", '', $logData[$i])
+					];
+				}
+			}
+		}
+	}
+
+	return array_reverse($log);
+}
+
+function wp_monolog_enqueue_scripts() {
+	$screen = get_current_screen();
+	if ( 'tools_page_wp_monolog' === $screen->id ) {
+		wp_enqueue_style( 'wp_monolog', plugins_url( basename( plugin_dir_path( __FILE__ ) ), basename( __FILE__ ) ) . '/assets/style.css' );
+		wp_enqueue_script( 'wp_monolog', plugins_url( basename( plugin_dir_path( __FILE__ ) ), basename( __FILE__ ) ) . '/assets/script.js' );
+	}
+}
+add_action( 'admin_enqueue_scripts', 'wp_monolog_enqueue_scripts' );
