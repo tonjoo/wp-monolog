@@ -22,8 +22,6 @@ A global variable named `$logger` is available and it's an instance of `Monolog\
 
 **Error** logs will be sent by email to the site administrator. You can change this on the settings page of the plugin. ***WordPress Admin > Tools > WP Monolog***
 
-WP_DEBUG must be set to `true` for the logger to log. If it is set to `false` the logger will not log.
-
 Another global variable exists which is `$wp_monolog`, this instance is helpful at the moment to get new `Monolog\Logger` instances on demand. This is useful for example when you have different features spread across your theme or plugins and you want to create specific log records per feature for better error/warning/info tracking.
 
 **Example:**
