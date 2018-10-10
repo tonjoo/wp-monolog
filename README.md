@@ -16,10 +16,6 @@ $logger->addWarning("A warning message");
 $logger->addError("An error message");
 ```
 
-**Info** logs will be sent to the 'default' stream handler, which is a log file available at `wp-content/plugins/wp-monolog/log/yy-mm-dd_wp_monolog.log`.
-
-**Error** logs will be sent by email to the site administrator. You can change this on the settings page of the plugin. ***WordPress Admin > Tools > WP Monolog***
-
 Another global variable exists which is `$wp_monolog`, this instance is helpful at the moment to get new `Monolog\Logger` instances on demand. This is useful for example when you have different features spread across your theme or plugins and you want to create specific log records per feature for better error/warning/info tracking.
 
 **Example:**
@@ -53,3 +49,10 @@ The above examples will result in a log record similar to this (in order of appe
 [yyyy-mm-dd hh:ii:ss] GreetLog.ERROR: Message: Oops, something went wrong with the greeting message
 [yyyy-mm-dd hh:ii:ss] ReplyGreetingLog.INFO: Message: Replying greeting
 ```
+## Configuration
+
+**Log Level** The log level can be adjusted from the WordPress Admin ***WordPress Admin > Tools > WP Monolog*** or define `WP_MONOLOG_LOG_LEVEL` in wp-config
+
+**Info** logs will be sent to the 'default' stream handler, which is a log file available at `wp-content/plugins/wp-monolog/log/yy-mm-dd_wp_monolog.log`.
+
+**Error** logs will be sent by email to the site administrator. You can change this on the settings page of the plugin. ***WordPress Admin > Tools > WP Monolog***
