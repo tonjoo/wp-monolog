@@ -307,8 +307,8 @@ function formatBytes($bytes, $precision = 2) {
 	$pow = min($pow, count($units) - 1); 
 
 	// Uncomment one of the following alternatives
-	// $bytes /= pow(1024, $pow);
-	// $bytes /= (1 << (10 * $pow)); 
+	$bytes /= pow(1024, $pow);
+	$bytes /= (1 << (10 * $pow)); 
 
 	return round($bytes, $precision) . $units[$pow]; 
 }
@@ -320,7 +320,7 @@ function wp_monolog_readfile($file, $page = 1) {
 		return false;
 	}
 
-	$chunkSize = 500000;
+	$chunkSize = 200000;
 	$iterations = 0;
 
 	$data = [];
