@@ -20,6 +20,10 @@ Monolog supports the logging levels described by RFC 5424.
 
 The log level logging can be adjusted from the WordPress Admin ***WordPress Admin > Tools > WP Monolog*** or define `WP_MONOLOG_LOG_LEVEL` in wp-config
 
+```
+define('WP_MONOLOG_LOG_LEVEL', 'error');
+```
+
 ## Usage
 A global variable named `$logger` is available and it's an instance of `Monolog\Logger`, so you can use it as you would normally use monolog:
 
