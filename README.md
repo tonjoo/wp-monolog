@@ -21,7 +21,8 @@ Monolog supports the logging levels described by RFC 5424.
 The log level logging can be adjusted from the WordPress Admin ***WordPress Admin > Tools > WP Monolog*** or define `WP_MONOLOG_LOG_LEVEL` in wp-config
 
 ```
-define('WP_MONOLOG_LOG_LEVEL', 'error');
+// Must be uppercase
+define('WP_MONOLOG_LOG_LEVEL', 'ERROR');
 ```
 
 ## Usage
