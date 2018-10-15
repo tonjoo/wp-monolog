@@ -148,11 +148,13 @@ function wp_monolog_options_page(  ) {
 
 function wp_monolog_page_setting() {
 	global $wp_filesystem;
+
 	if ( empty( $wp_filesystem ) ) {
 		require_once  ABSPATH . '/wp-admin/includes/file.php' ;
 		WP_Filesystem();
 	}
 	$logfiles = $wp_filesystem->dirlist( wp_monolog_settings( 'log_path' ) );
+
 	if ( false === $logfiles ) {
 		wp_monolog_not_writable_alert();
 	}
@@ -175,6 +177,15 @@ function wp_monolog_page_setting() {
 					</td>
 					<td>
 						<p><?php esc_html_e( 'Can be overridden by defining WP_MONOLOG_LOG_LEVEL', 'wp_monolog' ) ?></p>
+					</td>
+				</tr>				
+				<tr>
+					<th scope="row">Log file location:</th>
+					<td class="value">
+						<?php echo WP_MONOLOG_LOG_PATH ?>
+					</td>
+					<td>
+						<p><?php esc_html_e( 'Can set by define WP_MONOLOG_LOG_PATH', 'wp_monolog' ) ?></p>
 					</td>
 				</tr>
 				<!-- <tr>
@@ -224,6 +235,9 @@ function wp_monolog_page_viewer() {
 		WP_Filesystem();
 	}
 	$logfiles = $wp_filesystem->dirlist( wp_monolog_settings( 'log_path' ) );
+
+
+
 	if ( false === $logfiles ) {
 		return wp_monolog_not_writable_alert();
 	}
@@ -237,6 +251,7 @@ function wp_monolog_page_viewer() {
 		$file = array_keys( $logfiles )[0];
 	}
 	$page = isset( $_GET['pagenum'] ) && 0 < intval( $_GET['pagenum'] ) ? sanitize_text_field( wp_unslash( $_GET['pagenum'] ) ) : 1;
+
 	$logs = wp_monolog_readfile( $file, $page );
 	if ( false === $logs ) {
 		return wp_monolog_not_writable_alert();
@@ -314,7 +329,7 @@ function formatBytes($bytes, $precision = 2) {
 }
 
 function wp_monolog_readfile($file, $page = 1) {
-	$handle = fopen( wp_monolog_settings('log_path') . $file, "r");
+	$handle = fopen( wp_monolog_settings('log_path') .'/'. $file, "r");
 	
 	if ( false === $handle ) {
 		return false;

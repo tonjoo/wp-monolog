@@ -56,10 +56,10 @@ class WPMonolog {
 		// create log channels               
 		$logger->pushHandler( new StreamHandler( $log_file ) );
 
-		$mailStream = new WPMailHandler( $s['WPMailHandler']['to'], $s['WPMailHandler']['subject'], $s['WPMailHandler']['from'] );
-		$mailStream->setFormatter( new HTMLFormatter );
+		// $mailStream = new WPMailHandler( $s['WPMailHandler']['to'], $s['WPMailHandler']['subject'], $s['WPMailHandler']['from'] );
+		// $mailStream->setFormatter( new HTMLFormatter );
 
-		$logger->pushHandler( $mailStream );
+		// $logger->pushHandler( $mailStream );
 
 		return $logger;
 	}
@@ -68,8 +68,13 @@ class WPMonolog {
 
 function wp_monolog_settings( $index = '' ) {
 	$settings = get_option( "wp_monolog_settings", array() );
+
+	if (!defined('WP_MONOLOG_LOG_PATH')) {
+		define('WP_MONOLOG_LOG_PATH',WP_CONTENT_DIR . '/monolog'); 
+	}
+
 	$defaults = array(
-		'log_path'      => WP_CONTENT_DIR . '/monolog/',
+		'log_path'      => WP_MONOLOG_LOG_PATH,
 		'log_name'      => date('Y-m-d').'_wp_monolog.log',
 		'level'         => 100,
 		'WPMailHandler' => array(

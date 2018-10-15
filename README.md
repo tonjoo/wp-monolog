@@ -25,7 +25,15 @@ The log level logging can be adjusted from the WordPress Admin ***WordPress Admi
 define('WP_MONOLOG_LOG_LEVEL', 'ERROR');
 ```
 
-## Usage
+### Log Path
+
+Default log path is `WP_CONTENT_DIR . '/monolog'`. This can overiden by using `WP_MONOLOG_LOG_PATH` 
+
+```
+define('WP_MONOLOG_LOG_PATH','/your/custom/path');
+```
+
+# Usage
 A global variable named `$logger` is available and it's an instance of `Monolog\Logger`, so you can use it as you would normally use monolog:
 
 ```php
@@ -69,8 +77,3 @@ The above examples will result in a log record similar to this (in order of appe
 [yyyy-mm-dd hh:ii:ss] GreetLog.ERROR: Message: Oops, something went wrong with the greeting message
 [yyyy-mm-dd hh:ii:ss] ReplyGreetingLog.INFO: Message: Replying greeting
 ```
-## Configuration
-
-**Info** logs will be sent to the 'default' stream handler, which is a log file available at `wp-content/plugins/wp-monolog/log/yy-mm-dd_wp_monolog.log`.
-
-**Error** logs will be sent by email to the site administrator. You can change this on the settings page of the plugin. ***WordPress Admin > Tools > WP Monolog***
