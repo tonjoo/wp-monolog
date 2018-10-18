@@ -1,3 +1,6 @@
+.form-table td {
+	vertical-align: top;
+}
 .wp-monolog-wrapper .filter {
 	float: left;
 	margin: 1em 0;

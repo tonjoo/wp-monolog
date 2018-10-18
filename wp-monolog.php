@@ -75,6 +75,7 @@ class WPMonolog {
 
 function wp_monolog_settings( $index = '' ) {
 	$settings = get_option( "wp_monolog_settings", array() );
+
 	$defaults = array(
 		'log_path'      => WP_CONTENT_DIR . '/monolog/',
 		'log_interval'	=> 'daily',

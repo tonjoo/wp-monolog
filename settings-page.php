@@ -148,11 +148,13 @@ function wp_monolog_options_page(  ) {
 
 function wp_monolog_page_setting() {
 	global $wp_filesystem;
+
 	if ( empty( $wp_filesystem ) ) {
 		require_once  ABSPATH . '/wp-admin/includes/file.php' ;
 		WP_Filesystem();
 	}
 	$logfiles = $wp_filesystem->dirlist( wp_monolog_settings( 'log_path' ) );
+
 	if ( false === $logfiles ) {
 		wp_monolog_not_writable_alert();
 	}
@@ -175,6 +177,16 @@ function wp_monolog_page_setting() {
 					</td>
 					<td>
 						<p><?php esc_html_e( 'Can be overridden by defining WP_MONOLOG_LOG_LEVEL', 'wp_monolog' ) ?></p>
+						<p>
+							<strong>DEBUG</strong>: Detailed debug information.<br>
+							<strong>INFO</strong>: Interesting events. Examples: User logs in, SQL logs.<br>
+							<strong>NOTICE</strong>: Normal but significant events.<br>
+							<strong>WARNING</strong>: Exceptional occurrences that are not errors. Examples: Use of deprecated APIs, poor use of an API, undesirable things that are not necessarily wrong.<br>
+							<strong>ERROR</strong>: Runtime errors that do not require immediate action but should typically be logged and monitored.<br>
+							<strong>CRITICAL</strong>: Critical conditions. Example: Application component unavailable, unexpected exception.<br>
+							<strong>ALERT</strong>: Action must be taken immediately. Example: Entire website down, database unavailable, etc. This should trigger the SMS alerts and wake you up.<br>
+							<strong>EMERGENCY</strong>: Emergency: system is unusable.<br>
+						</p>
 					</td>
 				</tr>
 				<tr>
@@ -200,7 +212,7 @@ function wp_monolog_page_setting() {
 					</td>
 				</tr>
 				<tr>
-					<th scope="row">Log path:</th>
+					<th scope="row">Log file location:</th>
 					<td class="value">
 						<textarea style="width: 100%;" readonly><?php echo esc_attr( $settings['log_path'] ) ?></textarea>
 					</td>
@@ -234,6 +246,9 @@ function wp_monolog_page_viewer() {
 		WP_Filesystem();
 	}
 	$logfiles = $wp_filesystem->dirlist( wp_monolog_settings( 'log_path' ) );
+
+
+
 	if ( false === $logfiles ) {
 		return wp_monolog_not_writable_alert();
 	}
@@ -247,6 +262,7 @@ function wp_monolog_page_viewer() {
 		$file = array_keys( $logfiles )[0];
 	}
 	$page = isset( $_GET['pagenum'] ) && 0 < intval( $_GET['pagenum'] ) ? sanitize_text_field( wp_unslash( $_GET['pagenum'] ) ) : 1;
+
 	$logs = wp_monolog_readfile( $file, $page );
 	if ( false === $logs ) {
 		return wp_monolog_not_writable_alert();
@@ -324,7 +340,7 @@ function formatBytes($bytes, $precision = 2) {
 }
 
 function wp_monolog_readfile($file, $page = 1) {
-	$handle = fopen( wp_monolog_settings('log_path') . $file, "r");
+	$handle = fopen( wp_monolog_settings('log_path') .'/'. $file, "r");
 	
 	if ( false === $handle ) {
 		return false;
