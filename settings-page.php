@@ -177,27 +177,37 @@ function wp_monolog_page_setting() {
 						<p><?php esc_html_e( 'Can be overridden by defining WP_MONOLOG_LOG_LEVEL', 'wp_monolog' ) ?></p>
 					</td>
 				</tr>
-				<!-- <tr>
-					<th scope="row">From e-mail:</th>
+				<tr>
+					<th scope="row">Log files:</th>
 					<td class="value">
-						<input name="wp_monolog_settings[WPMailHandler][from]" value="<?php echo esc_attr( $settings['WPMailHandler']['from'] ) ?>" type="email">
+						<select name="wp_monolog_settings[log_interval]">
+							<option value="daily" <?php echo ( 'daily' == $settings['log_interval'] ) ? 'selected' : '' ?>>Daily</option>
+							<option value="weekly" <?php echo ( 'weekly' == $settings['log_interval'] ) ? 'selected' : '' ?>>Weekly</option>
+							<option value="monthly" <?php echo ( 'monthly' == $settings['log_interval'] ) ? 'selected' : '' ?>>Monthly</option>
+						</select>
 					</td>
-					<td></td>
+					<td>
+						<p><?php esc_html_e( 'The interval of log file creation.', 'wp_monolog' ) ?></p>
+					</td>
 				</tr>
 				<tr>
-					<th scope="row">To e-mail:</th>
+					<th scope="row">Viewer chunksize per page:</th>
 					<td class="value">
-						<input name="wp_monolog_settings[WPMailHandler][to]" value="<?php echo esc_attr( $settings['WPMailHandler']['to'] ) ?>" type="email">
+						<input type="number" name="wp_monolog_settings[chunksize]" value="<?php echo esc_attr( $settings['chunksize'] ) ?>">
 					</td>
-					<td></td>
+					<td>
+						<p>bytes</p>
+					</td>
 				</tr>
 				<tr>
-					<th scope="row">Subject:</th>
+					<th scope="row">Log path:</th>
 					<td class="value">
-						<textarea name="wp_monolog_settings[WPMailHandler][subject]"><?php echo esc_html( $settings['WPMailHandler']['subject'] ) ?></textarea>
+						<textarea style="width: 100%;" readonly><?php echo esc_attr( $settings['log_path'] ) ?></textarea>
 					</td>
-					<td></td>
-				</tr> -->
+					<td>
+						<p><?php esc_html_e( 'Log path. Can be set by defining WP_MONOLOG_LOG_PATH', 'wp_monolog' ) ?></p>
+					</td>
+				</tr>
 			</tbody>
 		</table>
 		<p class="submit">
@@ -308,7 +318,7 @@ function formatBytes($bytes, $precision = 2) {
 
 	// Uncomment one of the following alternatives
 	$bytes /= pow(1024, $pow);
-	$bytes /= (1 << (10 * $pow)); 
+	// $bytes /= (1 << (10 * $pow)); 
 
 	return round($bytes, $precision) . $units[$pow]; 
 }
@@ -320,24 +330,26 @@ function wp_monolog_readfile($file, $page = 1) {
 		return false;
 	}
 
-	$chunkSize = 200000;
+	$chunkSize = intval( wp_monolog_settings('chunksize') );
 	$iterations = 0;
 
 	$data = [];
 
+	$logs = [];
 	if ($handle) {
 		while (! feof($handle)) {
 			$iterations++;
 			$chunk = fread($handle, $chunkSize);
-
-			if($iterations == $page){
-				$data['logs'] = wp_monolog_pretty($chunk);
-			}
+			$logs[] = wp_monolog_pretty($chunk);
+			// if($iterations == $page){
+			// 	$data['logs'] = wp_monolog_pretty($chunk);
+			// }
 		}
 
 		fclose($handle);
 	}
 
+	$data['logs']		= $logs[ $iterations - $page ];
 	$data['total_page'] = $iterations;
 
 	return $data;

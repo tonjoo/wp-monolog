@@ -45,7 +45,14 @@ class WPMonolog {
 			mkdir( $s["log_path"] );
 		}
 
-		$log_file = $s["log_path"].'/'.$s["log_name"];
+		$log_file = untrailingslashit( $s["log_path"] );
+		if ( 'daily' === $s['log_interval'] ) {
+			$log_file .= '/' . date('Y-m-d') . '_wp_monolog.log';
+		} elseif ( 'weekly' === $s['log_interval'] ) {
+			$log_file .= '/' . date('Y-W') . '_wp_monolog.log';
+		} elseif ( 'monthly' === $s['log_interval'] ) {
+			$log_file .= '/' . date('Y-m') . '_wp_monolog.log';
+		}
 
 		if( !file_exists( $log_file ) ){
 			file_put_contents($log_file, '');
@@ -56,10 +63,10 @@ class WPMonolog {
 		// create log channels               
 		$logger->pushHandler( new StreamHandler( $log_file ) );
 
-		$mailStream = new WPMailHandler( $s['WPMailHandler']['to'], $s['WPMailHandler']['subject'], $s['WPMailHandler']['from'] );
-		$mailStream->setFormatter( new HTMLFormatter );
+		// $mailStream = new WPMailHandler( $s['WPMailHandler']['to'], $s['WPMailHandler']['subject'], $s['WPMailHandler']['from'] );
+		// $mailStream->setFormatter( new HTMLFormatter );
 
-		$logger->pushHandler( $mailStream );
+		// $logger->pushHandler( $mailStream );
 
 		return $logger;
 	}
@@ -70,14 +77,16 @@ function wp_monolog_settings( $index = '' ) {
 	$settings = get_option( "wp_monolog_settings", array() );
 	$defaults = array(
 		'log_path'      => WP_CONTENT_DIR . '/monolog/',
-		'log_name'      => date('Y-m-d').'_wp_monolog.log',
+		'log_interval'	=> 'daily',
+		'chunksize'		=> 200000,
 		'level'         => 100,
-		'WPMailHandler' => array(
-			'to'        => get_option('admin_email'),
-			'subject'   => 'An Error on the site "'.get_option('blogname').'" has been detected.',
-			'from'      => get_option('admin_email')
-		)
 	);
+	if ( defined( 'WP_MONOLOG_LOG_LEVEL' ) && in_array( WP_MONOLOG_LOG_LEVEL, array_keys( $levels ) ) ) {
+		$settings['level'] = WP_MONOLOG_LOG_LEVEL;
+	}
+	if ( defined( 'WP_MONOLOG_LOG_PATH' ) ) {
+		$settings['log_path'] = WP_MONOLOG_LOG_PATH;
+	}
 	$settings = apply_filters( 'wp_monolog_setting', wp_parse_args( $settings, $defaults ) );
 	if ( ! empty( $index ) && isset( $settings[ $index ] ) ) {
 		return $settings[ $index ];
