@@ -308,7 +308,7 @@ function wp_monolog_page_viewer() {
 				<?php foreach ( $logs['logs'] as $log ) : ?>
 					<tr>
 						<td class="col-level"><div class="<?php echo esc_attr( $log['level_class'] ) ?>"><?php echo esc_html( $log['level'] ) ?></div></td>
-						<td class="col-date"><?php echo esc_html( $log['date'] ) ?></td>
+						<td class="col-date"><?php echo esc_html( date( 'Y-m-d H:i:s', strtotime( $log['date'] ) + intval( 3600 * get_option( 'gmt_offset' ) ) ) ) ?></td>
 						<td class="col-log"><div class="log-container"><?php echo rtrim( $log['text'], ' [] []' ); ?><span class="truncate-toggle"></span></div></td>
 					</tr>
 				<?php endforeach; ?>
