@@ -82,6 +82,7 @@ function wp_monolog_settings( $index = '' ) {
 		'chunksize'		=> 200000,
 		'level'         => 100,
 	);
+	$levels = Logger::getLevels();
 	if ( defined( 'WP_MONOLOG_LOG_LEVEL' ) && in_array( WP_MONOLOG_LOG_LEVEL, array_keys( $levels ) ) ) {
 		$settings['level'] = WP_MONOLOG_LOG_LEVEL;
 	}

@@ -245,21 +245,27 @@ function wp_monolog_page_viewer() {
 		require_once  ABSPATH . '/wp-admin/includes/file.php' ;
 		WP_Filesystem();
 	}
-	$logfiles = $wp_filesystem->dirlist( wp_monolog_settings( 'log_path' ) );
 
+	$path = wp_monolog_settings( 'log_path' );
 
-
-	if ( false === $logfiles ) {
+	// get directory file lists.
+	$logfiles = scandir( $path, 1 );
+	if ( false === $logfiles || ! is_array( $logfiles ) ) {
 		return wp_monolog_not_writable_alert();
 	}
+	// remove unecessary dir results.
+	$logfiles = array_diff( $logfiles, array('.', '..') );
 	if ( ! empty( $logfiles ) ) {
-		krsort( $logfiles );
+		// get first 20 files.
 		$logfiles = array_slice($logfiles, 0, 20);
 	}
-	if ( isset( $_GET['file'] ) && in_array( $_GET['file'], array_keys( $logfiles ) ) ) {
+	// reset array indexes.
+	$logfiles = array_values($logfiles);
+
+	if ( isset( $_GET['file'] ) && in_array( $_GET['file'], $logfiles ) ) {
 		$file = sanitize_text_field( wp_unslash( $_GET['file'] ) );
 	} else {
-		$file = array_keys( $logfiles )[0];
+		$file = $logfiles[0];
 	}
 	$page = isset( $_GET['pagenum'] ) && 0 < intval( $_GET['pagenum'] ) ? sanitize_text_field( wp_unslash( $_GET['pagenum'] ) ) : 1;
 
@@ -284,8 +290,8 @@ function wp_monolog_page_viewer() {
 				<input type="hidden" name="page" value="<?php echo isset( $_GET['page'] ) ? esc_attr( $_GET['page'] ) : '' ?>">
 				<input type="hidden" name="tab" value="<?php echo isset( $_GET['tab'] ) ? esc_attr( $_GET['tab'] ) : '' ?>">
 				<select name="file">
-					<?php foreach ( $logfiles as $key => $logfile ) : ?>
-						<option <?php echo $file === $key ? 'selected' : ''; ?> value="<?php echo esc_attr( $key ) ?>"><?php echo esc_html( $key . ' (' . formatBytes( $logfile['size'] ) . ')' ) ?></option>
+					<?php foreach ( $logfiles as $logfile ) : ?>
+						<option <?php echo $file === $logfile ? 'selected' : ''; ?> value="<?php echo esc_attr( $logfile ) ?>"><?php echo esc_html( $logfile . formatBytes( filesize( $path . $logfile ) ) ) ?></option>
 					<?php endforeach; ?>
 				</select>
 				<button class="button button-primary">Get Logs</button>
@@ -325,7 +331,10 @@ function wp_monolog_page_viewer() {
 	<?php
 }
 
-function formatBytes($bytes, $precision = 2) { 
+function formatBytes($bytes, $precision = 2) {
+	if ( false === $bytes ) {
+		return;
+	}
 	$units = array('B', 'KB', 'MB', 'GB', 'TB'); 
 
 	$bytes = max($bytes, 0); 
@@ -336,7 +345,7 @@ function formatBytes($bytes, $precision = 2) {
 	$bytes /= pow(1024, $pow);
 	// $bytes /= (1 << (10 * $pow)); 
 
-	return round($bytes, $precision) . $units[$pow]; 
+	return ' (' . round($bytes, $precision) . $units[$pow] . ')'; 
 }
 
 function wp_monolog_readfile($file, $page = 1) {
