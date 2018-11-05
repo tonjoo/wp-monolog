@@ -62,7 +62,9 @@ class WPMonolog {
 		$logger = new Logger( $log_name );
 
 		// create log channels               
-		$logger->pushHandler( new StreamHandler( $log_file ) );
+		if ( is_writable( $log_file ) ) {
+			$logger->pushHandler( new StreamHandler( $log_file ) );
+		}
 
 		// $mailStream = new WPMailHandler( $s['WPMailHandler']['to'], $s['WPMailHandler']['subject'], $s['WPMailHandler']['from'] );
 		// $mailStream->setFormatter( new HTMLFormatter );
