@@ -56,7 +56,7 @@ class WPMonolog {
 
 		if( !file_exists( $log_file ) ){
 			file_put_contents( $log_file, '' );
-			chmod( $log_file, 0770 );
+			chmod( $log_file, 0774 );
 		}
 
 		$logger = new Logger( $log_name );
