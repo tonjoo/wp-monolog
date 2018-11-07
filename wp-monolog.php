@@ -54,17 +54,22 @@ class WPMonolog {
 			$log_file .= '/' . date('Y-m') . '_wp_monolog.log';
 		}
 
-		if( !file_exists( $log_file ) ){
+		if ( ! file_exists( $log_file ) ) {
 			file_put_contents( $log_file, '' );
 			chmod( $log_file, 0774 );
 		}
 
+		if ( ! is_writable( $log_file ) ) {
+			$log_file = str_replace( '.log', '-alt.log', $log_file );
+			if ( ! file_exists( $log_file ) ) {
+				file_put_contents( $log_file, '' );
+				chmod( $log_file, 0774 );
+			}
+		}
+
 		$logger = new Logger( $log_name );
 
-		// create log channels               
-		if ( is_writable( $log_file ) ) {
-			$logger->pushHandler( new StreamHandler( $log_file ) );
-		}
+		$logger->pushHandler( new StreamHandler( $log_file ) );
 
 		// $mailStream = new WPMailHandler( $s['WPMailHandler']['to'], $s['WPMailHandler']['subject'], $s['WPMailHandler']['from'] );
 		// $mailStream->setFormatter( new HTMLFormatter );
