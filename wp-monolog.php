@@ -47,7 +47,7 @@ class WPMonolog {
 
 		$logger = new Logger( $log_name );
 
-		if ( is_writable( $s["log_path"] ) ) {
+		if ( is_writable( $s["log_path"] ) || ( defined( 'WP_DEBUG' ) && true === WP_DEBUG ) ) {
 
 			$log_file = untrailingslashit( $s["log_path"] );
 			if ( 'daily' === $s['log_interval'] ) {
