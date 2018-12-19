@@ -164,7 +164,7 @@ function wp_monolog_page_setting() {
 		<table class="form-table">
 			<tbody>
 				<tr>
-					<th scope="row">Logging level:</th>
+					<th scope="row">Logging level for Web/Default:</th>
 					<td class="value">
 						<select name="wp_monolog_settings[level]" <?php echo defined( 'WP_MONOLOG_LOG_LEVEL' ) ? 'disabled' : '' ?>>
 							<?php
@@ -177,16 +177,40 @@ function wp_monolog_page_setting() {
 					</td>
 					<td>
 						<p><?php esc_html_e( 'Can be overridden by defining WP_MONOLOG_LOG_LEVEL', 'wp_monolog' ) ?></p>
-						<p>
-							<strong>DEBUG</strong>: Detailed debug information.<br>
-							<strong>INFO</strong>: Interesting events. Examples: User logs in, SQL logs.<br>
-							<strong>NOTICE</strong>: Normal but significant events.<br>
-							<strong>WARNING</strong>: Exceptional occurrences that are not errors. Examples: Use of deprecated APIs, poor use of an API, undesirable things that are not necessarily wrong.<br>
-							<strong>ERROR</strong>: Runtime errors that do not require immediate action but should typically be logged and monitored.<br>
-							<strong>CRITICAL</strong>: Critical conditions. Example: Application component unavailable, unexpected exception.<br>
-							<strong>ALERT</strong>: Action must be taken immediately. Example: Entire website down, database unavailable, etc. This should trigger the SMS alerts and wake you up.<br>
-							<strong>EMERGENCY</strong>: Emergency: system is unusable.<br>
-						</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">Logging level for CLI:</th>
+					<td class="value">
+						<select name="wp_monolog_settings[level_cli]" <?php echo defined( 'WP_MONOLOG_LOG_LEVEL_CLI' ) ? 'disabled' : '' ?>>
+							<?php
+								$level = wp_monolog_get_level( 'cli' );
+							?>
+							<option value="disabled" <?php echo 'disabled' == $level ? 'selected' : '' ?>>Disabled</option>
+							<?php foreach ( Logger::getLevels() as $key => $value) : ?>
+								<option <?php echo ( $value == $level ) ? 'selected' : '' ?> value="<?php echo esc_attr( $value ) ?>"><?php echo esc_html( $key ) ?></option>
+							<?php endforeach; ?>
+						</select>
+					</td>
+					<td>
+						<p><?php esc_html_e( 'Can be overridden by defining WP_MONOLOG_LOG_LEVEL_CLI. If disabled all logs from CLI will be written on default log file.', 'wp_monolog' ) ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">Logging level for Cron:</th>
+					<td class="value">
+						<select name="wp_monolog_settings[level_cron]" <?php echo defined( 'WP_MONOLOG_LOG_LEVEL_CRON' ) ? 'disabled' : '' ?>>
+							<?php
+								$level = wp_monolog_get_level( 'cron' );
+							?>
+							<option value="disabled" <?php echo 'disabled' == $level ? 'selected' : '' ?>>Disabled</option>
+							<?php foreach ( Logger::getLevels() as $key => $value) : ?>
+								<option <?php echo ( $value == $level ) ? 'selected' : '' ?> value="<?php echo esc_attr( $value ) ?>"><?php echo esc_html( $key ) ?></option>
+							<?php endforeach; ?>
+						</select>
+					</td>
+					<td>
+						<p><?php esc_html_e( 'Can be overridden by defining WP_MONOLOG_LOG_LEVEL_CRON. If disabled all logs when doing cron will be written on default log file.', 'wp_monolog' ) ?></p>
 					</td>
 				</tr>
 				<tr>
@@ -220,6 +244,47 @@ function wp_monolog_page_setting() {
 						<p><?php esc_html_e( 'Log path. Can be set by defining WP_MONOLOG_LOG_PATH', 'wp_monolog' ) ?></p>
 					</td>
 				</tr>
+				<tr>
+					<td colspan="3" style="padding: 0;">
+						<p>Logging Levels:</p>
+						<p>
+							<table class="table-info">
+								<tr>
+									<td><strong><span class="wp-monolog-info">DEBUG</span></strong></td>
+									<td>Detailed debug information</td>
+								</tr>
+								<tr>
+									<td><strong><span class="wp-monolog-info">INFO</span></strong></td>
+									<td>Interesting events. Examples: User logs in, SQL logs.</td>
+								</tr>
+								<tr>
+									<td><strong><span class="wp-monolog-info">NOTICE</span></strong></td>
+									<td>Normal but significant events.</td>
+								</tr>
+								<tr>
+									<td><strong><span class="wp-monolog-warning">WARNING</span></strong></td>
+									<td>Exceptional occurrences that are not errors. Examples: Use of deprecated APIs, poor use of an API, undesira</
+									</things that are not necessarily wrong.<br>
+								<tr>
+									<td><strong><span class="wp-monolog-danger">ERROR</span></strong></td>
+									<td>Runtime errors that do not require immediate action but should typically be logged and monitored.</td>
+								</tr>
+								<tr>
+									<td><strong><span class="wp-monolog-danger">CRITICAL</span></strong></td>
+									<td>Critical conditions. Example: Application component unavailable, unexpected exception.</td>
+								</tr>
+								<tr>
+									<td><strong><span class="wp-monolog-danger">ALERT</span></strong></td>
+									<td>Action must be taken immediately. Example: Entire website down, database unavailable, etc. This should trig</
+									</the SMS alerts and wake you up.<br>
+								<tr>
+									<td><strong><span class="wp-monolog-danger">EMERGENCY</span></strong></td>
+									<td>System is unusable.</td>
+								</tr>
+							</table>
+						</p>
+					</td>
+				</tr>
 			</tbody>
 		</table>
 		<p class="submit">
@@ -245,24 +310,27 @@ function wp_monolog_page_viewer() {
 		require_once  ABSPATH . '/wp-admin/includes/file.php' ;
 		WP_Filesystem();
 	}
-	$logfiles = $wp_filesystem->dirlist( wp_monolog_settings( 'log_path' ) );
 
-
-
-	if ( false === $logfiles ) {
+	$path = wp_monolog_settings( 'log_path' );
+	// get directory file lists.
+	$logfiles = scandir( $path, 1 );
+	if ( false === $logfiles || ! is_array( $logfiles ) ) {
 		return wp_monolog_not_writable_alert();
 	}
+	// remove unecessary dir results.
+	$logfiles = array_diff( $logfiles, array('.', '..') );
 	if ( ! empty( $logfiles ) ) {
-		krsort( $logfiles );
+		// get first 20 files.
 		$logfiles = array_slice($logfiles, 0, 20);
 	}
-	if ( isset( $_GET['file'] ) && in_array( $_GET['file'], array_keys( $logfiles ) ) ) {
+	// reset array indexes.
+	$logfiles = array_values($logfiles);
+	if ( isset( $_GET['file'] ) && in_array( $_GET['file'], $logfiles ) ) {
 		$file = sanitize_text_field( wp_unslash( $_GET['file'] ) );
 	} else {
-		$file = array_keys( $logfiles )[0];
+		$file = $logfiles[0];
 	}
 	$page = isset( $_GET['pagenum'] ) && 0 < intval( $_GET['pagenum'] ) ? sanitize_text_field( wp_unslash( $_GET['pagenum'] ) ) : 1;
-
 	$logs = wp_monolog_readfile( $file, $page );
 	if ( false === $logs ) {
 		return wp_monolog_not_writable_alert();
@@ -285,7 +353,7 @@ function wp_monolog_page_viewer() {
 				<input type="hidden" name="tab" value="<?php echo isset( $_GET['tab'] ) ? esc_attr( $_GET['tab'] ) : '' ?>">
 				<select name="file">
 					<?php foreach ( $logfiles as $key => $logfile ) : ?>
-						<option <?php echo $file === $key ? 'selected' : ''; ?> value="<?php echo esc_attr( $key ) ?>"><?php echo esc_html( $key . ' (' . formatBytes( $logfile['size'] ) . ')' ) ?></option>
+						<option <?php echo $file === $logfile ? 'selected' : ''; ?> value="<?php echo esc_attr( $logfile ) ?>"><?php echo esc_html( $logfile . ' (' . formatBytes( filesize( $path . $logfile ) ) . ')' ) ?></option>
 					<?php endforeach; ?>
 				</select>
 				<button class="button button-primary">Get Logs</button>

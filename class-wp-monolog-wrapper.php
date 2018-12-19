@@ -11,6 +11,26 @@ class WP_Monolog_Wrapper {
 		$this->level  = $level;
 	}
 
+	public function addLog( $level, $message, $context = array() ) {
+		if ( 'debug' === $level ) {
+			return $this->addDebug( $message, $context );
+		} elseif ( 'info' === $level ) {
+			return $this->addInfo( $message, $context );
+		} elseif ( 'notice' === $level ) {
+			return $this->addNotice( $message, $context );
+		} elseif ( 'warning' === $level ) {
+			return $this->addWarning( $message, $context );
+		} elseif ( 'error' === $level ) {
+			return $this->addError( $message, $context );
+		} elseif ( 'critical' === $level ) {
+			return $this->addCritical( $message, $context );
+		} elseif ( 'alert' === $level ) {
+			return $this->addAlert( $message, $context );
+		} elseif ( 'emergency' === $level ) {
+			return $this->addEmergency( $message, $context );
+		}
+	}
+
 	public function addDebug( $message, array $context = array() ) {
 		if ( 100 >= $this->level ) {
 			do_action( 'wp_monolog_log_debug', $message, $context );
