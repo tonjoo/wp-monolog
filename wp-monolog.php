@@ -102,6 +102,7 @@ function wp_monolog_settings( $index = '' ) {
 		'level_cron'	=> 'disabled'
 	);
 	$settings = wp_parse_args( $settings, $defaults );
+	$levels = Logger::getLevels();
 
 	if ( defined( 'WP_MONOLOG_LOG_LEVEL' ) && in_array( WP_MONOLOG_LOG_LEVEL, array_keys( $levels ) ) ) {
 		$settings['level'] = WP_MONOLOG_LOG_LEVEL;
