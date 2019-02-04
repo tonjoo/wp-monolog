@@ -325,7 +325,7 @@ function wp_monolog_page_viewer() {
 	}
 	// reset array indexes.
 	$logfiles = array_values($logfiles);
-	if ( isset( $_GET['file'] ) && in_array( $_GET['file'], $logfiles ) ) {
+	if ( isset( $_GET['file'] ) && ( in_array( $_GET['file'], $logfiles ) || file_exists( trailingslashit( $path ) . $_GET['file'] ) ) ) {
 		$file = sanitize_text_field( wp_unslash( $_GET['file'] ) );
 	} else {
 		$file = $logfiles[0];
@@ -353,7 +353,7 @@ function wp_monolog_page_viewer() {
 				<input type="hidden" name="tab" value="<?php echo isset( $_GET['tab'] ) ? esc_attr( $_GET['tab'] ) : '' ?>">
 				<select name="file">
 					<?php foreach ( $logfiles as $key => $logfile ) : ?>
-						<option <?php echo $file === $logfile ? 'selected' : ''; ?> value="<?php echo esc_attr( $logfile ) ?>"><?php echo esc_html( $logfile . ' (' . formatBytes( filesize( $path . $logfile ) ) . ')' ) ?></option>
+						<option <?php echo $file === $logfile ? 'selected' : ''; ?> value="<?php echo esc_attr( $logfile ) ?>"><?php echo esc_html( $logfile . ' (' . formatBytes( filesize( trailingslashit( $path ) . $logfile ) ) . ')' ) ?></option>
 					<?php endforeach; ?>
 				</select>
 				<button class="button button-primary">Get Logs</button>
